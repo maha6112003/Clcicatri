@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calculatrice</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style type="text/css">
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #343;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .calculator-container {
+      display: flex;
+      align-items: center;
+    }
+    .calculator {
+      background: #6633FF;
+      text-align: center;
+      width: 400px;
+      padding: 30px;
+      border-radius: 30px;
+      margin-right: 20px;
+    }
+    form {
+      padding: 0 5px;
+      margin-bottom: 15px;
+    }
+    .textview {
+      width: 100%;
+      height: 40px;
+      padding: 0 10px;
+      pointer-events: none;
+      border: none;
+      background-color: #6633FF;
+      color: black;
+    }
+    .clearfix:before, .clearfix:after {
+      content: '';
+      display: table;
+      clear: both;
+      width: 100%;
+    }
+    .col-3 {
+      width: 25%;
+      padding: 7px;
+      float: left;
+      margin-top: 10px;
+    }
+    .col-6 {
+      width: 50%;
+      padding: 7px;
+      float: left;
+    }
+    .button {
+      width: 90%;
+      height: 40px;
+      outline: none;
+      border-radius: 50px;
+      border: none;
+    }
+    .button.top-button {
+      background: #FF3390;
+      border-color: #d6d6d6;
+      color: #fff;
+    }
+    .button.equal {
+      background: #ad3535;
+      color: #fff;
+      font-size: 22px;
+    }
+    .button.operator {
+      background: #20b2aa;
+      border-color: #d6d6d6;
+      color: #fff;
+      font-size: 20px;
+    }
+    .chart {
+      width: 400px;
+      max-width: 700px;
+    }
+    .controls-container {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .equation-input {
+      width: 100%;
+      height: 50px;
+      padding: 0 10px;
+      border-radius: 30px;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .controls button {
+      flex: 1;
+      height: 50px;
+      margin: 0 5px;
+      background-color: #70FF33;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator-container">
+    <div class="calculator">
+      <form name="form">
+        <input type="text" name="textview" class="textview">
+      </form>
+      <div class="clearfix">
+        <div class="col-3"><input type="button" value="C" class="button top-button" onclick="clean();"></div>
+        <div class="col-3"><input type="button" value="√" class="button top-button" onclick="sqrt();"></div>
+        <div class="col-3"><input type="button" value="Del" class="button top-button" onclick="back();"></div>
+        <div class="col-3"><input type="button" value="&#247;" class="button operator" onclick="insert('/');"></div>
+      </div>
+      <div class="clearfix">
+        <div class="col-3"><input type="button" value="1" class="button" onclick="insert(1);"></div>
+        <div class="col-3"><input type="button" value="2" class="button" onclick="insert(2);"></div>
+        <div class="col-3"><input type="button" value="3" class="button" onclick="insert(3);"></div>
+        <div class="col-3"><input type="button" value="&#215;" class="button operator" onclick="insert('*');"></div>
+      </div>
+      <div class="clearfix">
+        <div class="col-3"><input type="button" value="4" class="button" onclick="insert(4);"></div>
+        <div class="col-3"><input type="button" value="5" class="button" onclick="insert(5);"></div>
+        <div class="col-3"><input type="button" value="6" class="button" onclick="insert(6);"></div>
+        <div class="col-3"><input type="button" value="&#8722;" class="button operator" onclick="insert('-');"></div>
+      </div>
+      <div class="clearfix">
+        <div class="col-3"><input type="button" value="7" class= "button" onclick="insert(7);"></div>
+        <div class="col-3"><input type="button" value="8" class="button" onclick="insert(8);"></div>
+        <div class="col-3"><input type="button" value="9" class="button" onclick="insert(9);"></div>
+        <div class="col-3"><input type="button" value="+" class="button operator" onclick="insert('+');"></div>
+      </div>
+      <div class="clearfix">
+        <div class="col-3"><input type="button" value="." class="button" onclick="insert('.');"></div>
+        <div class="col-3"><input type="button" value="0" class="button" onclick="insert(0);"></div>
+        <div class="col-6"><input type="button" value="=" class="button equal" onclick="equal();"></div>
+      </div>
+      <div class="clearfix">
+        <div class="col-3"><input type="button" value="MR" class="button top-button" onclick="recallFromMemory();"></div>
+        <div class="col-3"><input type="button" value="M+" class="button top-button" onclick="saveToMemory();"></div>
+      </div>
+    </div>
+
+    <div class="chart" id="myPlot"></div>
+  </div>
+  <input type="text" name="equation" class="equation-input" placeholder="Entrez l'équation">
+  <div class="controls">
+    <button class="button" onclick='plot("scatter")'>Nuage de points</button>
+    <button class="button" onclick='plot("lines")'>Tracer des lignes</button>
+  </div>
+  <!-- Fonctions JavaScript -->
+  <script>
+    var previousCalculations = [];
+
+    function insert(num) {
+      var myString = document.form.textview.value;
+      var lastChar = myString[myString.length - 1];
+      if (myString.length < 30) {
+        if (!isNaN(lastChar) || lastChar == null || !isNaN(num)) {
+          document.form.textview.value = myString + num;
+        } else if (num != lastChar) {
+          document.form.textview.value = myString.replace(lastChar, num);
+        }
+      }
+    }
+
+    function equal() {
+      var sum = document.form.textview.value;
+      if (sum) {
+        var result = eval(sum);
+        document.form.textview.value = result;
+        previousCalculations.push(sum + " = " + result);
+      }
+    }
+
+    function clean() {
+      document.form.textview.value = '';
+    }
+
+    function back() {
+      var exp = document.form.textview.value;
+      document.form.textview.value = exp.substring(0, exp.length - 1);
+    }
+
+    function saveToMemory() {
+      var currentCalculation = document.form.textview.value;
+      previousCalculations.push(currentCalculation);
+      document.form.textview.value = '';
+    }
+
+    function recallFromMemory() {
+      if (previousCalculations.length > 0) {
+        var previousCalculation = previousCalculations.pop();
+        document.form.textview.value = previousCalculation;
+      }
+    }
+
+    function plot(type) {
+      var exp = document.querySelector(".equation-input").value;
+      var xvalues = [];
+      var yvalues = [];
+      for (var x = 0; x <= 10; x += 0.1) {
+        xvalues.push(x);
+        yvalues.push(eval(exp.replace(/x/g, x)));
+      }
+      var mode = "lines";
+      if (type == "scatter") {
+        mode = "markers";
+      }
+      var data = [{ x: xvalues, y: yvalues, mode: mode, type: "scatter" }];
+      var layout = { title: "Y = " + exp };
+      Plotly.newPlot("myPlot", data, layout);
+    }
+
+    function sqrt() {
+      var exp = document.form.textview.value;
+      document.form.textview.value = Math.sqrt(eval(exp));
+    }
+  </script>
+</body>
+</html>
+   
